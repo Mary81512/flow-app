@@ -1,6 +1,12 @@
 // app/page.tsx
 import { fetchItems, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File, FileKind } from "@/lib/types"
+import {
+  DocumentIcon,
+  DocumentTextIcon,
+  FolderOpenIcon,
+} from "@heroicons/react/24/outline"
+
 
 // -----------------------------
 // Helper: Items sortieren (neueste zuerst)
@@ -115,110 +121,156 @@ function isTodayOk(item: Item): boolean {
 export default function TodayPage() {
   const items = getSortedItems()
 
+  const now = new Date()
+  const timeString = now.toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+  const dateString = now.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  })
+
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#050510",
-        color: "#f8fafc",
-        padding: "2rem",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      <header style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>Today</h1>
-        <p style={{ opacity: 0.7, fontSize: "0.95rem" }}>
-          Neu eingegangene Aufträge & Projekte (Mock-Daten aus mockApi.ts)
-        </p>
-      </header>
+    <main className="min-h-screen bg-[#262626] text-slate-50">
+      <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-2 px-6 py-6">
+        {/* Topbar: Plus-Button + „Tabs“ */}
+        <div className="flex items-center justify-between">
+          <button className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none shadow-[0_3px_0_0_rgba(0,0,0,0.7)]">
+            +
+          </button>
 
-      <section
-        style={{
-          borderRadius: "1rem",
-          backgroundColor: "#0b0f1a",
-          padding: "1rem 1.5rem",
-          border: "1px solid #252b3b",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: "0.9rem",
-          }}
-        >
-          <thead>
-            <tr style={{ textAlign: "left", opacity: 0.8 }}>
-              <th style={{ padding: "0.5rem" }}>Time</th>
-              <th style={{ padding: "0.5rem" }}>Code</th>
-              <th style={{ padding: "0.5rem" }}>Kunde</th>
-              <th style={{ padding: "0.5rem" }}>Adresse</th>
-              <th style={{ padding: "0.5rem", textAlign: "center" }}>Files</th>
-              <th style={{ padding: "0.5rem", textAlign: "center" }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.slice(0, 4).map((item) => {
-              const time = formatUploadTime(item)
-              const displayCode = getDisplayCode(item, items)
-              const hasTicket = hasFileOfKind(item, "ticket")
-              const hasReport = hasFileOfKind(item, "report")
-              const ok = isTodayOk(item)
+          <nav className="flex gap-8 text-xs font-semibold tracking-[0.25em] uppercase">
+            <span className="text-sky-400">HEUTE</span>
+            <span className="text-slate-400">AUFTRÄGE</span>
+            <span className="text-slate-400">PROJEKTE</span>
+            <span className="text-slate-500">KALENDER</span>
+          </nav>
 
-              const rowBg =
-                item.type === "auftrag" ? "#705CD6" : "#4A7EC2"
+          {/* rechter Spacer, damit die Navi mittig bleibt */}
+          <div className="h-8 w-8" />
+        </div>
 
-              return (
-                <tr
-                  key={item.id}
-                  style={{
-                    backgroundColor: rowBg,
-                    color: "#020617",
-                  }}
-                >
-                  <td style={{ padding: "0.5rem 0.75rem" }}>{time}</td>
-                  <td style={{ padding: "0.5rem 0.75rem", fontWeight: 600 }}>
+        {/* Header: Greeting + Uhrzeit/Datum */}
+        <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+              Hallo Marcel!
+            </h1>
+          </div>
+
+          <div className="text-right text-slate-100">
+            <div className="text-4xl font-semibold leading-none md:text-5xl">
+              {timeString}
+            </div>
+            <div className="mt-2 text-lg text-slate-200">{dateString}</div>
+          </div>
+        </header>
+
+        {/* Tabellen-Header als Pille */}
+        <div className="mt-2 rounded-full bg-[#e5ddcf] px-8 py-4 text-[0.8rem] font-body uppercase tracking-[0.25em] text-slate-900 ">
+          <div className="flex items-center justify-between gap-4">
+            {/* Time */}
+            <span className="hidden w-[70px] sm:block">Time</span>
+            {/* ID */}
+            <span className="w-[140px]">ID</span>
+            {/* Kunde */}
+            <span className="flex-1">Kunde</span>
+            {/* Adresse (ab md) */}
+            <span className="hidden flex-[1.2] md:block">Adresse</span>
+            {/* Dateien (ab lg) */}
+            <span className="hidden w-[100px] text-center lg:block">
+              Dateien
+            </span>
+            {/* Daten-Status */}
+            <span className="w-[80px] text-center">Daten</span>
+            {/* Ordner-Spalte ohne Label */}
+            <span className="w-[48px]" />
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div className="mt-2 flex flex-col gap-2">
+          {items.slice(0, 4).map((item) => {
+            const time = formatUploadTime(item)
+            const displayCode = getDisplayCode(item, items)
+            const hasTicket = hasFileOfKind(item, "ticket")
+            const hasReport = hasFileOfKind(item, "report")
+            const ok = isTodayOk(item)
+
+            const rowBg =
+              item.type === "auftrag" ? "#705CD6" : "#4A7EC2"
+
+            return (
+              <div
+                key={item.id}
+                className="rounded-full px-8 py-4 text-base text-slate-900 "
+                style={{ backgroundColor: rowBg }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  {/* Time (ab sm) */}
+                  <div className="hidden w-[70px] font-mono text-xs sm:block">
+                    {time}
+                  </div>
+
+                  {/* ID / Code */}
+                  <div className="w-[140px] font-semibold">
                     {displayCode}
-                  </td>
-                  <td style={{ padding: "0.5rem 0.75rem" }}>
-                    {item.customer_name}
-                  </td>
-                  <td style={{ padding: "0.5rem 0.75rem" }}>{item.address}</td>
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "center",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {/* Ticket & Report als Emojis – später Icons */}
-                    <span
-                      style={{
-                        opacity: hasTicket ? 1 : 0.25,
-                        marginRight: "0.25rem",
-                      }}
+                  </div>
+
+                  {/* Kunde */}
+                  <div className="flex-1">{item.customer_name}</div>
+
+                  {/* Adresse (ab md) */}
+                  <div className="hidden flex-[1.2] truncate md:block">
+                    {item.address}
+                  </div>
+
+                  {/* Dateien (ab lg, Ticket + Report) */}
+                  <div className="hidden w-[100px] items-center justify-center gap-2 lg:flex">
+                    <DocumentIcon
+                      className={`h-9 w-9 ${
+                        hasTicket ? "opacity-100" : "opacity-30"
+                      }`}
+                    />
+                    <DocumentTextIcon
+                      className={`h-9 w-9 ${
+                        hasReport ? "opacity-100" : "opacity-30"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Daten-Status (OK / WARN) */}
+                  <div className="w-[80px] text-center">
+                    {ok ? (
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 text-lg">
+                        ✓
+                      </span>
+                    ) : (
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 text-lg">
+                        !
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Ordner-Button (Detail) */}
+                  <div className="flex w-[48px] items-center justify-end">
+                    <button
+                      type="button"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border-2 border-slate-900 bg-slate-900/10 transition hover:bg-slate-900/30"
+                      // TODO: hier später Navigation zur Detail-Seite einbauen
                     >
-                      📄
-                    </span>
-                    <span style={{ opacity: hasReport ? 1 : 0.25 }}>📑</span>
-                  </td>
-                  <td
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      textAlign: "center",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {ok ? "OK" : "WARN"}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </section>
+                      <FolderOpenIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </main>
   )
 }
-
 
