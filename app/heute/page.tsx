@@ -1,4 +1,7 @@
 // app/page.tsx
+import Link from "next/link"
+import { getDisplayCode } from "@/lib/codeHelpers"
+import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItems, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File, FileKind } from "@/lib/types"
 import {
@@ -19,52 +22,6 @@ function getSortedItems(): Item[] {
       const db = new Date(b.created_at.replace("Z", ""))
       return db.getTime() - da.getTime()
     })
-}
-
-// -----------------------------
-// Helper: Code mit -01 / -02-Suffix
-// -----------------------------
-function splitCode(code: string) {
-  const parts = code.split("-")
-
-  if (parts.length === 4) {
-    return {
-      stem: `${parts[0]}-${parts[1]}-${parts[2]}`,
-      suffix: parts[3],
-    }
-  }
-
-  return {
-    stem: code,
-    suffix: null as string | null,
-  }
-}
-
-function formatSuffix(n: number): string {
-  return n.toString().padStart(2, "0")
-}
-
-function getDisplayCode(item: Item, allItems: Item[]): string {
-  const { stem } = splitCode(item.code)
-
-  // alle Items mit gleichem Stamm
-  const group = allItems.filter((i) => {
-    const { stem: s } = splitCode(i.code)
-    return s === stem
-  })
-
-  if (group.length === 1) {
-    // nur eins → kein Suffix
-    return stem
-  }
-
-  // mehrere → Suffixe nach Code-Reihenfolge
-  const sorted = group.slice().sort((a, b) => a.code.localeCompare(b.code))
-  const index = sorted.indexOf(item)
-  const safeIndex = index === -1 ? 0 : index
-  const suffix = formatSuffix(safeIndex + 1)
-
-  return `${stem}-${suffix}`
 }
 
 // -----------------------------
@@ -136,21 +93,7 @@ export default function TodayPage() {
     <main className="min-h-screen bg-[#262626] text-slate-50">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-2 px-6 py-6">
         {/* Topbar: Plus-Button + „Tabs“ */}
-        <div className="flex items-center justify-between">
-          <button className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none shadow-[0_3px_0_0_rgba(0,0,0,0.7)]">
-            +
-          </button>
-
-          <nav className="flex gap-8 text-xs font-semibold tracking-[0.25em] uppercase">
-            <span className="text-sky-400">HEUTE</span>
-            <span className="text-slate-400">AUFTRÄGE</span>
-            <span className="text-slate-400">PROJEKTE</span>
-            <span className="text-slate-500">KALENDER</span>
-          </nav>
-
-          {/* rechter Spacer, damit die Navi mittig bleibt */}
-          <div className="h-8 w-8" />
-        </div>
+        <MainTopbar />
 
         {/* Header: Greeting + Uhrzeit/Datum */}
         <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -256,14 +199,14 @@ export default function TodayPage() {
 
                   {/* Ordner-Button (Detail) */}
                   <div className="flex w-[48px] items-center justify-end">
-                    <button
-                      type="button"
+                    <Link
+                      href={`/items/${item.id}`}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border-2 border-slate-900 bg-slate-900/10 transition hover:bg-slate-900/30"
-                      // TODO: hier später Navigation zur Detail-Seite einbauen
-                    >
-                      <FolderOpenIcon className="h-5 w-5" />
-                    </button>
+                        >
+                        <FolderOpenIcon className="h-5 w-5" />
+                    </Link>
                   </div>
+
                 </div>
               </div>
             )
