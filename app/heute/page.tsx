@@ -199,11 +199,13 @@ export default function TodayPage() {
 
                   {/* Ordner-Button (Detail) */}
                   <div className="flex w-[48px] items-center justify-end">
-                    <Link
-                      href={`/items/${item.id}`}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border-2 border-slate-900 bg-slate-900/10 transition hover:bg-slate-900/30"
-                        >
+                    <Link href={`/detail/${item.id}`}>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border-2 border-slate-900 bg-slate-900/10 transition hover:bg-slate-900/30"
+                      >
                         <FolderOpenIcon className="h-5 w-5" />
+                      </button>
                     </Link>
                   </div>
 

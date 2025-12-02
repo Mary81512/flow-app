@@ -131,18 +131,21 @@ export const mockLogs: LogEntry[] = [
 // Fake-API-Funktionen
 // ---------------------------------------------
 
+
 export function fetchItems(): Item[] {
-    return mockItems
+  return mockItems
 }
 
 export function fetchItem(id: string): Item | undefined {
-    return mockItems.find((i) => i.id === id)
+  // GANZ WICHTIG: hier auf item.id vergleichen, NICHT auf item.code
+  return mockItems.find((i) => i.id === id)
 }
 
 export function fetchFilesOfItem(id: string): File[] {
-    return mockFiles.filter((f) => f.item_id === id)
+  return mockFiles.filter((f) => f.item_id === id)
 }
 
 export function fetchLogsOfItem(id: string): LogEntry[] {
-    return mockLogs.filter((l) => l.item_id === id)
+  return mockLogs.filter((l) => l.item_id === id)
 }
+
