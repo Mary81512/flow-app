@@ -86,7 +86,7 @@ function hasBaseData(item: Item): boolean {
   return hasCode && hasCustomer && hasAddress && hasDate
 }
 
-// 1:1 deine Ampel-Logik in Textform
+// 1:1 deine Ampel-Logik, etwas aufgeräumt
 function getListStatusForItem(
   item: Item | undefined
 ): { text: string; trafficLight: "red" | "yellow" | "green" } {
@@ -167,7 +167,7 @@ export default function JobsPage() {
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-2 px-6 py-6">
         {/* Topbar: Plus-Button + Tabs (wie Today, nur anderer aktiver Tab) */}
         <div className="flex items-center justify-between">
-          <button className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none shadow-[0_3px_0_0_rgba(0,0,0,0.7)]">
+          <button className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none">
             +
           </button>
 
@@ -181,31 +181,41 @@ export default function JobsPage() {
           <div className="h-8 w-8" />
         </div>
 
-        {/* Header: Aufträge-Pille + Uhrzeit/Datum + (später Search) */}
-        <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="rounded-[2.5rem] bg-[#705CD6] px-10 py-6 shadow-[0_10px_0_0_rgba(0,0,0,0.7)]">
-            <h1 className="font-display text-4xl tracking-[0.12em] uppercase text-slate-900 md:text-5xl">
-              Aufträge
-            </h1>
-          </div>
+        {/* Header: Aufträge-Pille + Uhrzeit/Datum + Search */}
+       <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            {/* Aufträge-Pille */}
+            <div className="rounded-[2.5rem] bg-[#705CD6] px-10 py-6">
+                <h1 className="font-display text-4xl tracking-[0.12em] uppercase text-slate-900 md:text-5xl">
+                Aufträge
+                </h1>
+            </div>
 
-          <div className="flex flex-1 flex-col items-end gap-3">
-            <div className="text-right text-slate-100">
-              <div className="text-4xl font-semibold leading-none md:text-5xl">
+             {/* Rechts: Uhrzeit/Datum (nur ab md) + Suche */}
+            <div className="flex flex-1 flex-col gap-3 md:items-end">
+             {/* Uhrzeit + Datum NUR ab md */}
+            <div className="hidden text-right text-slate-100 md:block">
+                <div className="text-4xl font-semibold leading-none md:text-5xl">
                 {timeString}
-              </div>
-              <div className="mt-2 text-lg text-slate-200">{dateString}</div>
+            </div>
+            <div className="mt-2 text-lg text-slate-200">{dateString}</div>
             </div>
 
-            {/* Platzhalter-Suchfeld, nur Optik */}
-            <div className="mt-2 flex w-full max-w-xs items-center gap-2 rounded-full bg-[#e5ddcf] px-4 py-2 text-xs font-body uppercase tracking-[0.2em] text-slate-900 shadow-[0_6px_0_0_rgba(0,0,0,0.7)]">
-              <span className="flex-1 opacity-60">Suche (später)</span>
-              <span className="text-lg">🔍</span>
+            {/* Suchfeld:
+            - auf kleinen Screens: volle Breite
+            - ab md: wie vorher rechts, schmaler */}
+            <div className="mt-2 flex w-full items-center gap-2 rounded-full bg-[#e5ddcf] px-4 py-2 text-xs font-body uppercase tracking-[0.2em] text-slate-900 md:max-w-xs md:self-end">
+            <span className="flex-1 opacity-60">Suche (später)</span>
+            <span className="text-lg">🔍</span>
             </div>
-          </div>
+            </div>
         </header>
 
-        {/* Tabellen-Header wie Today, aber ohne Time-Spalte */}
+
+        {/* Tabellen-Header
+            - Mobile: nur ID + Kunde + Ordner
+            - md: Adresse + Status dazu
+            - lg: zusätzlich Dateien
+        */}
         <div className="mt-4 rounded-full bg-[#e5ddcf] px-8 py-4 text-[0.8rem] font-body uppercase tracking-[0.25em] text-slate-900">
           <div className="flex items-center justify-between gap-4">
             {/* ID */}
@@ -213,15 +223,17 @@ export default function JobsPage() {
             {/* Kunde */}
             <span className="flex-1">Kunde</span>
             {/* Adresse (ab md) */}
-            <span className="hidden flex-[1.2] md:block">Adresse</span>
+            <span className="hidden flex-[1.4] md:block">Adresse</span>
             {/* Dateien (ab lg) */}
             <span className="hidden w-[120px] text-center lg:block">
               Dateien
             </span>
-            {/* Status */}
-            <span className="w-[140px] text-center">Status</span>
+            {/* Status (ab md) */}
+            <span className="hidden w-[120px] text-center md:block">
+              Status
+            </span>
             {/* Ordner-Spalte */}
-            <span className="w-[48px]" />
+            <span className="w-[40px]" />
           </div>
         </div>
 
@@ -232,7 +244,7 @@ export default function JobsPage() {
             const hasTicket = hasTicketFile(item)
             const hasReport = hasReportFile(item)
             const { trafficLight } = getListStatusForItem(item)
-            const pillClasses = getStatusPillClasses(trafficLight)
+            const pillBackground = getStatusPillClasses(trafficLight)
 
             const rowBg = "#705CD6" // Jobs sind immer Aufträge
 
@@ -252,7 +264,7 @@ export default function JobsPage() {
                   <div className="flex-1">{item.customer_name}</div>
 
                   {/* Adresse (ab md) */}
-                  <div className="hidden flex-[1.2] truncate md:block">
+                  <div className="hidden flex-[1.4] truncate md:block">
                     {item.address}
                   </div>
 
@@ -270,15 +282,15 @@ export default function JobsPage() {
                     />
                   </div>
 
-                  {/* Status-Pille (Ampel) */}
-                  <div className="w-[140px] text-center">
+                  {/* Status-Pille (ab md), OHNE Rand */}
+                  <div className="hidden w-[120px] items-center justify-center md:flex">
                     <span
-                      className={`inline-flex h-9 w-full max-w-[140px] items-center justify-center rounded-full border-2 border-slate-900 ${pillClasses}`}
+                      className={`inline-flex h-7 w-full max-w-[120px] rounded-full ${pillBackground}`}
                     />
                   </div>
 
                   {/* Ordner-Button (Detail) */}
-                  <div className="flex w-[48px] items-center justify-end">
+                  <div className="flex w-[40px] items-center justify-end">
                     <button
                       type="button"
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border-2 border-slate-900 bg-slate-900/10 transition hover:bg-slate-900/30"
