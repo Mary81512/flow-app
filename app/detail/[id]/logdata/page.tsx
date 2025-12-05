@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { firstFileOfKind } from "@/lib/fileHelpers"
 
 import {
   ArrowDownTrayIcon,
@@ -53,7 +54,7 @@ export default function LogdataPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const logdata = getLogdataFile(files)
+  const logdata = firstFileOfKind(files, "logdata")
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">

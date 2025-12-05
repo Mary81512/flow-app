@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { filesOfKind } from "@/lib/fileHelpers"
 
 import {
   XMarkIcon,
@@ -14,12 +15,6 @@ import {
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline"
 
-// Helfer: alle Bild-Dateien holen
-function getPictureFiles(files: File[]): File[] {
-  return files.filter(
-    (f) => f.kind === "picture" || (f.kind as string) === "pictures"
-  )
-}
 
 export default function BilderPage({
   params,
@@ -53,7 +48,7 @@ export default function BilderPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const pictures = getPictureFiles(files)
+  const pictures = filesOfKind(files, "picture")
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">

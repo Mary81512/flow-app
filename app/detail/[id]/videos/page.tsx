@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { filesOfKind } from "@/lib/fileHelpers"
 
 import {
   XMarkIcon,
@@ -51,7 +52,7 @@ export default function VideosPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const videos = getVideoFiles(files)
+  const videos = filesOfKind(files, "video")
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { firstFileOfKind } from "@/lib/fileHelpers"
 
 import {
   ArrowDownTrayIcon,
@@ -13,11 +14,6 @@ import {
   PlusIcon,
   DocumentIcon,
 } from "@heroicons/react/24/outline"
-
-// kleines Helferchen: Ticket-File rausfiltern
-function getTicketFile(files: File[]): File | undefined {
-  return files.find((f) => f.kind === "ticket")
-}
 
 export default function TicketPage({
   params,
@@ -53,7 +49,8 @@ export default function TicketPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const ticket = getTicketFile(files)
+  const ticket = firstFileOfKind(files, "ticket")
+
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">

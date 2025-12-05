@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { filesOfKind } from "@/lib/fileHelpers"
 
 import {
   XMarkIcon,
@@ -51,7 +52,7 @@ export default function AndereDateienPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const others = getOtherFiles(files)
+  const others = filesOfKind(files, "other")
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">

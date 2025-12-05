@@ -10,6 +10,7 @@ import {
   fetchLogsOfItem,
 } from "@/lib/mockApi"
 import type { Item, File, LogEntry, FileKind } from "@/lib/types"
+import { hasFileOfKind } from "@/lib/fileHelpers"
 
 import {
   DocumentIcon,
@@ -40,10 +41,6 @@ function formatDateTime(iso: string): string {
     minute: "2-digit",
   })
   return `${d} · ${t}`
-}
-
-function hasFileOfKind(files: File[], kind: FileKind): boolean {
-  return files.some((f) => f.kind === kind)
 }
 
 function hasBaseData(item: Item): boolean {
@@ -300,110 +297,52 @@ export default function DetailPage({
 
             <div className="grid grid-cols-3 gap-6">
               {/* Auftragszettel */}
-             
-              {hasFileOfKind(files, "ticket") ? (
-                <Link href={`/detail/${item.id}/ticket`}>
-                  <DetailFileTile
-                    active
-                    icon={<DocumentIcon className="h-14 w-14" />}
-                    label="Auftragszettel"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<DocumentIcon className="h-14 w-14" />}
-                  label="Auftragszettel"
-                />
-              )}
+              <DetailFileTile
+                active={hasFileOfKind(files, "ticket")}
+                icon={<DocumentIcon className="h-14 w-14" />}
+                label="Auftragszettel"
+                href={`/detail/${item.id}/ticket`}
+              />
 
               {/* Baustellenbericht */}
-              {hasFileOfKind(files, "report") ? (
-                <Link href={`/detail/${item.id}/report`}>
-                  <DetailFileTile
-                    active
-                    icon={<DocumentTextIcon className="h-14 w-14" />}
-                    label="Baustellenbericht"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<DocumentTextIcon className="h-14 w-14" />}
-                  label="Baustellenbericht"
-                />
-              )}
+              <DetailFileTile
+                active={hasFileOfKind(files, "report")}
+                icon={<DocumentTextIcon className="h-14 w-14" />}
+                label="Baustellenbericht"
+                href={`/detail/${item.id}/report`}
+              />
 
-
-             {/* Logdata */}
-              {hasFileOfKind(files, "logdata") ? (
-                <Link href={`/detail/${item.id}/logdata`}>
-                  <DetailFileTile
-                    active
-                    icon={<FolderIcon className="h-14 w-14" />}
-                    label="Logdata"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<FolderIcon className="h-14 w-14" />}
-                  label="Logdata"
-                />
-              )}
+              {/* Logdata */}
+              <DetailFileTile
+                active={hasFileOfKind(files, "logdata")}
+                icon={<FolderIcon className="h-14 w-14" />}
+                label="Logdata"
+                href={`/detail/${item.id}/logdata`}
+              />
 
               {/* Bilder */}
-              {hasFileOfKind(files, "picture") ? (
-                <Link href={`/detail/${item.id}/bilder`}>
-                  <DetailFileTile
-                    active
-                    icon={<PhotoIcon className="h-14 w-14" />}
-                    label="Bilder"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<PhotoIcon className="h-14 w-14" />}
-                  label="Bilder"
-                />
-              )}
+              <DetailFileTile
+                active={hasFileOfKind(files, "picture")}
+                icon={<PhotoIcon className="h-14 w-14" />}
+                label="Bilder"
+                href={`/detail/${item.id}/bilder`}
+              />
 
               {/* Videos */}
-              {hasFileOfKind(files, "video") ? (
-                <Link href={`/detail/${item.id}/videos`}>
-                  <DetailFileTile
-                    active
-                    icon={<VideoCameraIcon className="h-14 w-14" />}
-                    label="Videos"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<VideoCameraIcon className="h-14 w-14" />}
-                  label="Videos"
-                />
-              )}
+              <DetailFileTile
+                active={hasFileOfKind(files, "video")}
+                icon={<VideoCameraIcon className="h-14 w-14" />}
+                label="Videos"
+                href={`/detail/${item.id}/videos`}
+              />
 
               {/* Andere Dateien */}
-              {hasFileOfKind(files, "other") ? (
-                <Link href={`/detail/${item.id}/andere`}>
-                  <DetailFileTile
-                    active
-                    icon={<FolderIcon className="h-14 w-14" />}
-                    label="Andere Dateien"
-                  />
-                </Link>
-              ) : (
-                <DetailFileTile
-                  active={false}
-                  icon={<FolderIcon className="h-14 w-14" />}
-                  label="Andere Dateien"
-                />
-              )}
-
-
+              <DetailFileTile
+                active={hasFileOfKind(files, "other")}
+                icon={<FolderIcon className="h-14 w-14" />}
+                label="Andere Dateien"
+                href={`/detail/${item.id}/others`}
+              />
             </div>
           </div>
 
@@ -454,26 +393,39 @@ export default function DetailPage({
 // Kleine Hilfs-Komponente für Datei-Tile
 // -------------------------------------
 
-function DetailFileTile({
-  active,
-  icon,
-  label,
-}: {
+
+type DetailFileTileProps = {
   active: boolean
   icon: React.ReactNode
   label: string
-}) {
-  return (
-    <button
-      type="button"
-      className={`flex flex-col items-center gap-2 rounded-3xl px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em] ${
-        active
-          ? "cursor-pointer text-slate-50"
-          : "cursor-default text-slate-400 opacity-30"
-      }`}
-    >
+  href?: string
+}
+
+function DetailFileTile({ active, icon, label, href }: DetailFileTileProps) {
+  const baseClasses =
+    "flex flex-col items-center gap-2 rounded-3xl px-4 py-4 text-xs font-semibold uppercase tracking-[0.14em]"
+
+  const activeClasses = "cursor-pointer text-slate-50"
+  const inactiveClasses = "cursor-default text-slate-400 opacity-30"
+
+  const content = (
+    <div className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}>
       <div className="mb-1">{icon}</div>
       <span className="text-center">{label}</span>
-    </button>
+    </div>
   )
+
+  // Nur wenn aktiv **und** href vorhanden → klickbar machen
+  if (active && href) {
+    return (
+      <Link href={href} className="block">
+        {content}
+      </Link>
+    )
+  }
+
+  // sonst einfach nur die Kachel zurückgeben
+  return content
 }
+
+

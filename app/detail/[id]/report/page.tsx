@@ -6,6 +6,7 @@ import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
+import { filesOfKind } from "@/lib/fileHelpers"
 
 import {
   ArrowDownTrayIcon,
@@ -53,7 +54,7 @@ export default function ReportPage({
   }
 
   const files = fetchFilesOfItem(item.id)
-  const report = getReportFile(files)
+  const report = filesOfKind(files, "report")[0]
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">
