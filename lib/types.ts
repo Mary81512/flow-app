@@ -17,6 +17,7 @@ export type Item = {
     customer_name: string
     address: string
 
+    order_date: string
     created_at: string
     updated_at: string
 

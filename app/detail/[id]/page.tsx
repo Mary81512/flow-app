@@ -23,8 +23,17 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline"
 
-type InvoiceState = "none" | "invoice" | "paid"
+import {
+  setInvoiceStateForItem,
+  type InvoiceState,
+} from "@/lib/invoiceStateStore"
 
+import {
+  getInitialInvoiceStateForItem,
+  getStatusWithInvoice,
+  getStatusPillStyle,
+  isBaseDataOkDetail,
+} from "@/lib/statusHelpers"
 // -----------------------------
 // Helper: Daten + Files + Logs
 // -----------------------------
@@ -43,86 +52,6 @@ function formatDateTime(iso: string): string {
   return `${d} · ${t}`
 }
 
-function hasBaseData(item: Item): boolean {
-  const hasCode = !!item.code && item.code.trim().length > 0
-  const hasCustomer =
-    !!item.customer_name && item.customer_name.trim().length > 0
-  const hasAddress = !!item.address && item.address.trim().length > 0
-  const hasDate = !!item.created_at && item.created_at.trim().length > 0
-
-  return hasCode && hasCustomer && hasAddress && hasDate
-}
-
-// Today-Logik nachgebaut: Basis + Ticket bei Aufträgen
-function isBaseDataOkDetail(item: Item, files: File[]): boolean {
-  if (!hasBaseData(item)) return false
-  if (item.type === "auftrag") {
-    return hasFileOfKind(files, "ticket")
-  }
-  return true
-}
-
-// Status + Ampel abhängig von Invoice-Toggle
-function getStatusWithInvoice(
-  item: Item,
-  files: File[],
-  invoiceState: InvoiceState
-): { text: string; trafficLight: "red" | "yellow" | "green" } {
-  const baseOk = isBaseDataOkDetail(item, files)
-  const isProjekt = item.type === "projekt"
-  const isAuftrag = item.type === "auftrag"
-
-  const reportOk = hasFileOfKind(files, "report")
-  const invoiceDone =
-    invoiceState === "invoice" || invoiceState === "paid"
-
-  const parts: string[] = []
-
-  if (baseOk) {
-    parts.push("Basisdaten vollständig")
-  } else {
-    parts.push("Basisdaten fehlen")
-  }
-
-  if (isProjekt) {
-    parts.push(reportOk ? "Bericht vorhanden" : "Bericht fehlt")
-  }
-
-  parts.push(invoiceDone ? "Rechnung geschrieben" : "Rechnung fehlt")
-
-  let traffic: "red" | "yellow" | "green" = "red"
-
-  if (!baseOk) {
-    traffic = "red"
-  } else {
-    if (isProjekt) {
-      const allGood = baseOk && reportOk && invoiceDone
-      traffic = allGood ? "green" : "yellow"
-    } else if (isAuftrag) {
-      const allGood = baseOk && invoiceDone
-      traffic = allGood ? "green" : "yellow"
-    } else {
-      traffic = baseOk ? "yellow" : "red"
-    }
-  }
-
-  return { text: parts.join(" · "), trafficLight: traffic }
-}
-
-// Klasse für Status-Pille
-function getStatusPillStyle(traffic: "red" | "yellow" | "green") {
-  if (traffic === "red") {
-    return { backgroundColor: "#D46E6E" }
-  }
-  if (traffic === "green") {
-    return { backgroundColor: "#6DCC62" }
-  }
-  return {
-    backgroundImage:
-      "linear-gradient(135deg, #6DCC62 50%, #FFE14D 50%)",
-  }
-}
-
 // -----------------------------
 // Page-Komponente
 // -----------------------------
@@ -136,10 +65,9 @@ export default function DetailPage({
   const { id } = use(params)
 
   // 2. passendes Item aus der mockApi holen
-  const item = fetchItem(id)
+  const loaded = fetchItem(id)
 
-  // 3. Falls falsche URL oder keine Daten gefunden
-  if (!item) {
+  if (!loaded) {
     return (
       <main className="min-h-screen bg-[#262626] text-slate-50">
         <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-4 px-6 py-6">
@@ -153,19 +81,24 @@ export default function DetailPage({
     )
   }
 
+  const item: Item = loaded
+
+
   // AB HIER ist item garantiert vorhanden (nicht undefined)
   const files = fetchFilesOfItem(item.id)
   const logs = fetchLogsOfItem(item.id)
 
-  const [invoiceState, setInvoiceState] = useState<InvoiceState>("none")
+  const [invoiceState, setInvoiceState] = useState<InvoiceState>(
+  getInitialInvoiceStateForItem(item)
+  )
 
   const { trafficLight, text: statusText } = getStatusWithInvoice(
     item,
     files,
     invoiceState
   )
-
   const statusPillStyle = getStatusPillStyle(trafficLight)
+
   const baseOk = isBaseDataOkDetail(item, files)
   const hasReport = hasFileOfKind(files, "report")
   const hasInvoice =
@@ -179,10 +112,20 @@ export default function DetailPage({
   const typeColor = isAuftrag ? "#705CD6" : "#4A7EC2"
 
   function cycleInvoiceState(prev: InvoiceState): InvoiceState {
-    if (prev === "none") return "invoice"
-    if (prev === "invoice") return "paid"
-    return "none"
+  if (prev === "none") return "invoice"
+  if (prev === "invoice") return "paid"
+  return "none"
   }
+
+  function handleInvoiceToggle() {
+    setInvoiceState((prev: InvoiceState) => {
+      const next = cycleInvoiceState(prev)
+      setInvoiceStateForItem(item.id, next) // im Store merken
+      return next
+    })
+  }
+
+
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">
@@ -234,7 +177,7 @@ export default function DetailPage({
                     ? "#FFE14D" // gelb
                     : "#6DCC62", // grün
             }}
-            onClick={() => setInvoiceState(prev => cycleInvoiceState(prev))}
+            onClick={handleInvoiceToggle}
             >
             {invoiceState === "none" && (
                 <span className="text-xl leading-none">×</span>
