@@ -1,8 +1,10 @@
 // components/MainTopbar.tsx
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { AddModal } from "./AddModal"
 
 type Tab = {
   href: string
@@ -19,11 +21,16 @@ const TABS: Tab[] = [
 
 export function MainTopbar() {
   const pathname = usePathname()
+  const [isAddOpen, setIsAddOpen] = useState(false)
 
   return (
+    <>
     <div className="flex items-center justify-between">
       {/* Plus-Button */}
-      <button className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none">
+      <button
+        onClick={() => setIsAddOpen(true)}
+        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-500 bg-slate-900/60 text-xl leading-none"
+      >
         +
       </button>
 
@@ -64,5 +71,10 @@ export function MainTopbar() {
       {/* rechter Spacer, damit die Navi mittig bleibt */}
       <div className="h-8 w-8" />
     </div>
+    <AddModal
+    isOpen={isAddOpen}
+    onClose={() => setIsAddOpen(false)}
+    />
+    </>
   )
 }
