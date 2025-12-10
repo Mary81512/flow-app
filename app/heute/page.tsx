@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { getDisplayCode } from "@/lib/codeHelpers"
 import { MainTopbar } from "@/components/MainTopbar"
-import { fetchItems, fetchFilesOfItem } from "@/lib/mockApi"
+import { fetchItems, fetchFilesOfItem } from "@/lib/mock-data/mockApi"
 import type { Item, File, FileKind } from "@/lib/types"
 import {
   DocumentIcon,

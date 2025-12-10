@@ -1,20 +1,20 @@
-import type { Item, File, LogEntry } from "./types"
+// db/mockData.ts
+import type { Item, File, LogEntry } from "../lib/types"
 
 // ------------------------------------------------------
 // ITEMS
 // ------------------------------------------------------
 
-const items: Item[] = [
+export const items: Item[] = [
   {
     id: "A1",
     type: "auftrag",
-    code: "A-MARCEL-251125",          // Auftragsdatum 25.11.25
+    code: "A-MARCEL-251125", // Auftragsdatum 25.11.25
     customer_name: "Marcel",
     address: "Müllerstraße 8, 51069 Remscheid",
     order_date: "2025-11-25",
     created_at: "2025-11-25T08:10:00",
     updated_at: "2025-11-25T10:00:00",
-
     status: {
       data_complete: true,
       report_generated: true,
@@ -25,13 +25,12 @@ const items: Item[] = [
   {
     id: "A2",
     type: "auftrag",
-    code: "A-MEIER-230125",           // 23.01.25
+    code: "A-MEIER-230125", // 23.01.25
     customer_name: "Herr Meier",
     address: "Bergweg 12, 42103 Wuppertal",
     order_date: "2025-01-23",
     created_at: "2025-01-23T09:30:00",
     updated_at: "2025-01-23T10:15:00",
-
     status: {
       data_complete: true,
       report_generated: false,
@@ -42,13 +41,12 @@ const items: Item[] = [
   {
     id: "A3",
     type: "auftrag",
-    code: "A-SCHMIDT-150225",         // 15.02.25
+    code: "A-SCHMIDT-150225", // 15.02.25
     customer_name: "Frau Schmidt",
     address: "Waldstr. 55, 42853 Remscheid",
     order_date: "2025-02-15",
     created_at: "2025-02-15T11:20:00",
     updated_at: "2025-02-15T11:45:00",
-
     status: {
       data_complete: false,
       report_generated: false,
@@ -59,13 +57,12 @@ const items: Item[] = [
   {
     id: "P1",
     type: "projekt",
-    code: "P-NIKE-010325",            // 01.03.25
+    code: "P-NIKE-010325", // 01.03.25
     customer_name: "Nike GmbH",
     address: "Sportallee 9, Köln",
     order_date: "2025-03-01",
     created_at: "2025-03-01T08:00:00",
     updated_at: "2025-03-05T16:30:00",
-
     status: {
       data_complete: true,
       report_generated: true,
@@ -76,13 +73,12 @@ const items: Item[] = [
   {
     id: "P2",
     type: "projekt",
-    code: "P-ALBERN-100325",          // 10.03.25
+    code: "P-ALBERN-100325", // 10.03.25
     customer_name: "Albern Bau",
     address: "Hauptstr. 44, Düsseldorf",
     order_date: "2025-03-10",
     created_at: "2025-03-10T09:00:00",
     updated_at: "2025-03-10T12:00:00",
-
     status: {
       data_complete: true,
       report_generated: false,
@@ -93,13 +89,12 @@ const items: Item[] = [
   {
     id: "P3",
     type: "projekt",
-    code: "P-RHEIN-180225",           // 18.02.25
+    code: "P-RHEIN-180225", // 18.02.25
     customer_name: "Hausverwaltung Rhein",
     address: "Am Wall 78, Köln",
     order_date: "2025-02-18",
     created_at: "2025-02-18T07:30:00",
     updated_at: "2025-02-19T15:10:00",
-
     status: {
       data_complete: true,
       report_generated: false,
@@ -110,13 +105,12 @@ const items: Item[] = [
   {
     id: "A4",
     type: "auftrag",
-    code: "A-TESTKUNDE-010225",        // 01.02.25
+    code: "A-TESTKUNDE-010225", // 01.02.25
     customer_name: "Testkunde",
     address: "Testweg 1, Remscheid",
     order_date: "2025-02-01",
     created_at: "2025-02-01T08:30:00",
     updated_at: "2025-02-01T08:30:00",
-
     status: {
       data_complete: false,
       report_generated: false,
@@ -127,13 +121,12 @@ const items: Item[] = [
   {
     id: "P4",
     type: "projekt",
-    code: "P-GIGABAU-200325",         // 20.03.25
+    code: "P-GIGABAU-200325", // 20.03.25
     customer_name: "Gigabau AG",
     address: "Industriestr. 99, Essen",
     order_date: "2025-03-20",
     created_at: "2025-03-20T09:00:00",
     updated_at: "2025-03-21T12:00:00",
-
     status: {
       data_complete: true,
       report_generated: true,
@@ -146,7 +139,7 @@ const items: Item[] = [
 // FILES
 // ------------------------------------------------------
 
-const files: File[] = [
+export const files: File[] = [
   // A1
   {
     id: "F1",
@@ -281,7 +274,7 @@ const files: File[] = [
 // LOGS
 // ------------------------------------------------------
 
-const logs: LogEntry[] = [
+export const logs: LogEntry[] = [
   {
     id: "L1",
     item_id: "A1",
@@ -320,24 +313,7 @@ const logs: LogEntry[] = [
     source: "whatsapp",
   },
 ]
-
-// ------------------------------------------------------
-// API-Funktionen
-// ------------------------------------------------------
-
-export function fetchItems(): Item[] {
-  return items
-}
-
-export function fetchItem(id: string): Item | undefined {
-  return items.find((i) => i.id === id)
-}
-
-export function fetchFilesOfItem(itemId: string): File[] {
-  return files.filter((f) => f.item_id === itemId)
-}
-
-export function fetchLogsOfItem(itemId: string): LogEntry[] {
-  return logs.filter((l) => l.item_id === itemId)
-}
+export const mockItems = items
+export const mockFiles = files
+export const mockLogs = logs
 
