@@ -6,7 +6,7 @@ import Link from "next/link"
 import { getDisplayCode } from "@/lib/codeHelpers"
 import { MainTopbar } from "@/components/MainTopbar"
 import type { Item, File } from "@/lib/types"
-import { fetchItems, fetchFilesOfItem } from "@/lib/mock-data/mockApi"
+import { fetchItems, fetchFilesOfItem } from "@/lib/mockApi"
 import {
   DocumentIcon,
   DocumentTextIcon,

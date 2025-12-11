@@ -4,7 +4,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
-import { fetchItem, fetchFilesOfItem } from "@/lib/mock-data/mockApi"
+import { fetchItem, fetchFilesOfItem } from "@/lib/mockApi"
 import type { Item, File } from "@/lib/types"
 import { firstFileOfKind } from "@/lib/fileHelpers"
 

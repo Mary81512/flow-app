@@ -1,28 +1,14 @@
 // app/page.tsx
 import Link from "next/link"
-import { getDisplayCode } from "@/lib/codeHelpers"
 import { MainTopbar } from "@/components/MainTopbar"
-import { fetchItems, fetchFilesOfItem } from "@/lib/mock-data/mockApi"
+import { getDisplayCode } from "@/lib/codeHelpers"
+import { getLatestItems, getFilesOfItem } from "@/lib/db/queries"
 import type { Item, File, FileKind } from "@/lib/types"
 import {
   DocumentIcon,
   DocumentTextIcon,
   FolderOpenIcon,
 } from "@heroicons/react/24/outline"
-
-
-// -----------------------------
-// Helper: Items sortieren (neueste zuerst)
-// -----------------------------
-function getSortedItems(): Item[] {
-  return fetchItems()
-    .slice()
-    .sort((a, b) => {
-      const da = new Date(a.created_at.replace("Z", ""))
-      const db = new Date(b.created_at.replace("Z", ""))
-      return db.getTime() - da.getTime()
-    })
-}
 
 // -----------------------------
 // Helper: Uhrzeit hübsch anzeigen
@@ -36,18 +22,8 @@ function formatUploadTime(item: Item): string {
 }
 
 // -----------------------------
-// Helper: Dateien & Today-Status
+// Grunddaten + Today-Status
 // -----------------------------
-function getFilesOfItem(item: Item): File[] {
-  return fetchFilesOfItem(item.id)
-}
-
-function hasFileOfKind(item: Item, kind: FileKind): boolean {
-  const files = getFilesOfItem(item)
-  return files.some((f) => f.kind === kind)
-}
-
-// Grunddaten vorhanden?
 function hasBaseData(item: Item): boolean {
   const hasCode = !!item.code && item.code.trim().length > 0
   const hasCustomer =
@@ -58,14 +34,17 @@ function hasBaseData(item: Item): boolean {
   return hasCode && hasCustomer && hasAddress && hasDate
 }
 
-// Today: OK oder WARN?
-function isTodayOk(item: Item): boolean {
+function isTodayOk(
+  item: Item,
+  getFiles: (itemId: string) => File[]
+): boolean {
   const baseOk = hasBaseData(item)
   if (!baseOk) return false
 
   if (item.type === "auftrag") {
     // Aufträge brauchen Ticket
-    return hasFileOfKind(item, "ticket")
+    const files = getFiles(item.id)
+    return files.some((f) => f.kind === "ticket")
   }
 
   // Projekte: Basisdaten reichen
@@ -73,10 +52,30 @@ function isTodayOk(item: Item): boolean {
 }
 
 // -----------------------------
-// UI-Komponente
+// Page-Komponente (Server Component)
 // -----------------------------
-export default function TodayPage() {
-  const items = getSortedItems()
+export default async function TodayPage() {
+  // 1) Neueste 4 Items aus der DB holen
+  const items = await getLatestItems(4)
+
+  // 2) Für jedes Item die Files aus der DB holen (parallel)
+  const fileGroups = await Promise.all(
+    items.map(async (item) => ({
+      itemId: item.id,
+      files: await getFilesOfItem(item.id),
+    }))
+  )
+
+  // 3) Map bauen: itemId -> Files[]
+  const filesByItem = new Map<string, File[]>(
+    fileGroups.map((g) => [g.itemId, g.files])
+  )
+
+  // kleiner Helper, damit das unten lesbar bleibt
+  function hasFileOfKind(item: Item, kind: FileKind): boolean {
+    const files = filesByItem.get(item.id) ?? []
+    return files.some((f) => f.kind === kind)
+  }
 
   const now = new Date()
   const timeString = now.toLocaleTimeString("de-DE", {
@@ -135,12 +134,12 @@ export default function TodayPage() {
 
         {/* Rows */}
         <div className="mt-2 flex flex-col gap-2">
-          {items.slice(0, 4).map((item) => {
+          {items.map((item) => {
             const time = formatUploadTime(item)
             const displayCode = getDisplayCode(item, items)
             const hasTicket = hasFileOfKind(item, "ticket")
             const hasReport = hasFileOfKind(item, "report")
-            const ok = isTodayOk(item)
+            const ok = isTodayOk(item, (id) => filesByItem.get(id) ?? [])
 
             const rowBg =
               item.type === "auftrag" ? "#705CD6" : "#4A7EC2"
@@ -208,7 +207,6 @@ export default function TodayPage() {
                       </button>
                     </Link>
                   </div>
-
                 </div>
               </div>
             )
@@ -218,4 +216,3 @@ export default function TodayPage() {
     </main>
   )
 }
-

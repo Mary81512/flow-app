@@ -11,7 +11,7 @@ import {
   fetchItem,
   fetchFilesOfItem,
   fetchLogsOfItem,
-} from "@/lib/mock-data/mockApi"
+} from "@/lib/mockApi"
 
 import type { Item, File, LogEntry } from "@/lib/types"
 import { hasFileOfKind } from "@/lib/fileHelpers"
