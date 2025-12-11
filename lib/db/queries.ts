@@ -1,16 +1,17 @@
 // lib/db/queries.ts
 import { db } from "@/db/client"
-import { items, files } from "@/db/schema"
-import { desc, eq } from "drizzle-orm"
-import type { Item, File, FileKind } from "@/lib/types"
+import { items, files, logs } from "@/db/schema"
+import { desc, asc, eq } from "drizzle-orm"
+import type { Item, File, LogEntry, FileKind } from "@/lib/types"
 
-// -----------------------------
-// DB-Typen aus dem Schema
-// -----------------------------
+// DB-Typen
 type DbItem = typeof items.$inferSelect
 type DbFile = typeof files.$inferSelect
+type DbLog = typeof logs.$inferSelect
 
-// DB-Row -> Frontend-Item mappen
+// ------------------------
+// Mapper: DB → Frontend
+// ------------------------
 function mapDbItem(row: DbItem): Item {
   return {
     id: row.id,
@@ -19,8 +20,10 @@ function mapDbItem(row: DbItem): Item {
     customer_name: row.customerName,
     address: row.address,
     order_date: row.orderDate ?? "",
+
     created_at: row.createdAt,
     updated_at: row.updatedAt,
+
     status: {
       data_complete: row.statusDataComplete,
       report_generated: row.statusReportGenerated,
@@ -29,7 +32,6 @@ function mapDbItem(row: DbItem): Item {
   }
 }
 
-// DB-Row -> Frontend-File mappen
 function mapDbFile(row: DbFile): File {
   return {
     id: row.id,
@@ -42,21 +44,21 @@ function mapDbFile(row: DbFile): File {
   }
 }
 
-// -----------------------------
-// Public Queries
-// -----------------------------
-
-// Alle Items nach Upload-Zeit sortiert (neueste zuerst)
-export async function getItemsSortedByUploadTime(): Promise<Item[]> {
-  const rows = await db
-    .select()
-    .from(items)
-    .orderBy(desc(items.createdAt))
-
-  return rows.map(mapDbItem)
+function mapDbLog(row: DbLog): LogEntry {
+  return {
+    id: row.id,
+    item_id: row.itemId,
+    text: row.text,
+    time: row.time,
+    source: row.source as LogEntry["source"],
+  }
 }
 
-// Neueste Items (nach createdAt) – limit optional, Standard 20
+// ------------------------
+// Abfragen
+// ------------------------
+
+// Today / Listen: neueste Items
 export async function getLatestItems(limit = 20): Promise<Item[]> {
   const rows = await db
     .select()
@@ -66,13 +68,76 @@ export async function getLatestItems(limit = 20): Promise<Item[]> {
 
   return rows.map(mapDbItem)
 }
+// Alle Items für ein bestimmtes Auftragsdatum (YYYY-MM-DD),
+// sortiert nach Upload-Zeit (createdAt) – NEUESTE zuerst
+export async function getItemsForOrderDate(
+  orderDate: string
+): Promise<Item[]> {
+  const rows = await db
+    .select()
+    .from(items)
+    .where(eq(items.orderDate, orderDate))
+    .orderBy(desc(items.createdAt)) // neueste oben
 
-// Alle Files zu einem Item
+  return rows.map(mapDbItem)
+}
+
+
+
+// Detail: einzelnes Item
+export async function getItemById(id: string): Promise<Item | null> {
+  const rows = await db
+    .select()
+    .from(items)
+    .where(eq(items.id, id))
+    .limit(1)
+
+  const row = rows[0]
+  return row ? mapDbItem(row) : null
+}
+
+// Dateien zu einem Item
 export async function getFilesOfItem(itemId: string): Promise<File[]> {
   const rows = await db
     .select()
     .from(files)
     .where(eq(files.itemId, itemId))
+    .orderBy(desc(files.createdAt))
 
   return rows.map(mapDbFile)
 }
+
+// Logs zu einem Item
+export async function getLogsOfItem(itemId: string): Promise<LogEntry[]> {
+  const rows = await db
+    .select()
+    .from(logs)
+    .where(eq(logs.itemId, itemId))
+    .orderBy(asc(logs.time))
+
+  return rows.map(mapDbLog)
+}
+
+// Alle Aufträge (type="auftrag"), sortiert nach Auftragsdatum + Uploadzeit (neueste oben)
+export async function getAuftraege(): Promise<Item[]> {
+  const rows = await db
+    .select()
+    .from(items)
+    .where(eq(items.type, "auftrag"))
+    .orderBy(desc(items.orderDate), desc(items.createdAt))
+
+  return rows.map(mapDbItem)
+}
+
+
+// Alle Projekte (type="projekt"), sortiert nach Auftragsdatum + Uploadzeit
+export async function getProjekte(): Promise<Item[]> {
+  const rows = await db
+    .select()
+    .from(items)
+    .where(eq(items.type, "projekt"))
+    .orderBy(desc(items.orderDate), desc(items.createdAt))
+
+  return rows.map(mapDbItem)
+}
+

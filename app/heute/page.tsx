@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { getDisplayCode } from "@/lib/codeHelpers"
-import { getLatestItems, getFilesOfItem } from "@/lib/db/queries"
+import { getItemsForOrderDate, getFilesOfItem } from "@/lib/db/queries"
 import type { Item, File, FileKind } from "@/lib/types"
 import {
   DocumentIcon,
@@ -36,44 +36,45 @@ function hasBaseData(item: Item): boolean {
 
 function isTodayOk(
   item: Item,
-  getFiles: (itemId: string) => File[]
+  hasTicket: boolean,
+  hasReport: boolean
 ): boolean {
   const baseOk = hasBaseData(item)
   if (!baseOk) return false
 
   if (item.type === "auftrag") {
     // Aufträge brauchen Ticket
-    const files = getFiles(item.id)
-    return files.some((f) => f.kind === "ticket")
+    return hasTicket
   }
 
   // Projekte: Basisdaten reichen
   return true
 }
 
+
 // -----------------------------
-// Page-Komponente (Server Component)
+// UI-Komponente (Server Component)
 // -----------------------------
 export default async function TodayPage() {
-  // 1) Neueste 4 Items aus der DB holen
-  const items = await getLatestItems(4)
+  // Heutiges Auftragsdatum als YYYY-MM-DD
+  const todayStr = new Date().toISOString().slice(0, 10)
 
-  // 2) Für jedes Item die Files aus der DB holen (parallel)
-  const fileGroups = await Promise.all(
-    items.map(async (item) => ({
-      itemId: item.id,
-      files: await getFilesOfItem(item.id),
-    }))
+  // ✅ Nur Items von heute, nach Upload-Zeit sortiert
+  const items: Item[] = await getItemsForOrderDate(todayStr)
+
+  // Alle Files zu diesen Items laden (parallel)
+  const filesByItem = new Map<string, File[]>()
+
+  await Promise.all(
+    items.map(async (item) => {
+      const files = await getFilesOfItem(item.id)
+      filesByItem.set(item.id, files)
+    })
   )
 
-  // 3) Map bauen: itemId -> Files[]
-  const filesByItem = new Map<string, File[]>(
-    fileGroups.map((g) => [g.itemId, g.files])
-  )
-
-  // kleiner Helper, damit das unten lesbar bleibt
-  function hasFileOfKind(item: Item, kind: FileKind): boolean {
-    const files = filesByItem.get(item.id) ?? []
+  // Helper: hat dieses Item eine Datei von Art X?
+  function hasFileOfKind(itemId: string, kind: FileKind): boolean {
+    const files = filesByItem.get(itemId) ?? []
     return files.some((f) => f.kind === kind)
   }
 
@@ -91,10 +92,9 @@ export default async function TodayPage() {
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-2 px-6 py-6">
-        {/* Topbar: Plus-Button + „Tabs“ */}
         <MainTopbar />
 
-        {/* Header: Greeting + Uhrzeit/Datum */}
+        {/* Header */}
         <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
@@ -110,24 +110,17 @@ export default async function TodayPage() {
           </div>
         </header>
 
-        {/* Tabellen-Header als Pille */}
+        {/* Tabellen-Header */}
         <div className="mt-2 rounded-full bg-[#e5ddcf] px-8 py-4 text-[0.8rem] font-body uppercase tracking-[0.25em] text-slate-900 ">
           <div className="flex items-center justify-between gap-4">
-            {/* Time */}
             <span className="hidden w-[70px] sm:block">Time</span>
-            {/* ID */}
             <span className="w-[140px]">ID</span>
-            {/* Kunde */}
             <span className="flex-1">Kunde</span>
-            {/* Adresse (ab md) */}
             <span className="hidden flex-[1.2] md:block">Adresse</span>
-            {/* Dateien (ab lg) */}
             <span className="hidden w-[100px] text-center lg:block">
               Dateien
             </span>
-            {/* Daten-Status */}
             <span className="w-[80px] text-center">Daten</span>
-            {/* Ordner-Spalte ohne Label */}
             <span className="w-[48px]" />
           </div>
         </div>
@@ -137,9 +130,10 @@ export default async function TodayPage() {
           {items.map((item) => {
             const time = formatUploadTime(item)
             const displayCode = getDisplayCode(item, items)
-            const hasTicket = hasFileOfKind(item, "ticket")
-            const hasReport = hasFileOfKind(item, "report")
-            const ok = isTodayOk(item, (id) => filesByItem.get(id) ?? [])
+
+            const hasTicket = hasFileOfKind(item.id, "ticket")
+            const hasReport = hasFileOfKind(item.id, "report")
+            const ok = isTodayOk(item, hasTicket, hasReport)
 
             const rowBg =
               item.type === "auftrag" ? "#705CD6" : "#4A7EC2"
@@ -151,7 +145,7 @@ export default async function TodayPage() {
                 style={{ backgroundColor: rowBg }}
               >
                 <div className="flex items-center justify-between gap-4">
-                  {/* Time (ab sm) */}
+                  {/* Time */}
                   <div className="hidden w-[70px] font-mono text-xs sm:block">
                     {time}
                   </div>
@@ -164,12 +158,12 @@ export default async function TodayPage() {
                   {/* Kunde */}
                   <div className="flex-1">{item.customer_name}</div>
 
-                  {/* Adresse (ab md) */}
+                  {/* Adresse */}
                   <div className="hidden flex-[1.2] truncate md:block">
                     {item.address}
                   </div>
 
-                  {/* Dateien (ab lg, Ticket + Report) */}
+                  {/* Dateien */}
                   <div className="hidden w-[100px] items-center justify-center gap-2 lg:flex">
                     <DocumentIcon
                       className={`h-9 w-9 ${
@@ -183,7 +177,7 @@ export default async function TodayPage() {
                     />
                   </div>
 
-                  {/* Daten-Status (OK / WARN) */}
+                  {/* Daten-Status */}
                   <div className="w-[80px] text-center">
                     {ok ? (
                       <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-slate-900 text-lg">
@@ -196,7 +190,7 @@ export default async function TodayPage() {
                     )}
                   </div>
 
-                  {/* Ordner-Button (Detail) */}
+                  {/* Ordner-Button */}
                   <div className="flex w-[48px] items-center justify-end">
                     <Link href={`/detail/${item.id}`}>
                       <button
@@ -211,6 +205,12 @@ export default async function TodayPage() {
               </div>
             )
           })}
+
+          {items.length === 0 && (
+            <div className="mt-4 rounded-2xl bg-black/20 px-4 py-3 text-sm text-slate-300">
+              Heute gibt es noch keine Aufträge / Projekte.
+            </div>
+          )}
         </div>
       </div>
     </main>
