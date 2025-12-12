@@ -144,19 +144,28 @@ export default async function TodayPage() {
                 className="rounded-full px-8 py-4 text-base text-slate-900 "
                 style={{ backgroundColor: rowBg }}
               >
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items- justify-between gap-4">
                   {/* Time */}
-                  <div className="hidden w-[70px] font-mono text-xs sm:block">
+                  <div className="hidden w-[70px] font-mono text-xs sm:flex items-center">
                     {time}
                   </div>
 
                   {/* ID / Code */}
-                  <div className="w-[140px] font-semibold">
+                  <div className="w-[140px] font-semibold flex items-center">
                     {displayCode}
                   </div>
 
-                  {/* Kunde */}
-                  <div className="flex-1">{item.customer_name}</div>
+                  {/* Kunde + AP (falls vorhanden) */}
+                  <div className="flex-1 flex flex-col justify-center self-stretch">
+                  <div className="leading-none">{item.customer_name}</div>
+                  {item.contact_name && (
+                    <div className="mt-1 text-[0.65rem] leading-none text-slate-100/70">
+                      {item.contact_name}
+                    </div>
+                  )}
+                </div>
+
+
 
                   {/* Adresse */}
                   <div className="hidden flex-[1.2] truncate md:block">

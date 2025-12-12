@@ -16,6 +16,8 @@ export type Item = {
     type: ItemType
     customer_name: string
     address: string
+    billing_address?: string | null
+    contact_name?: string | null
 
     order_date: string
     created_at: string

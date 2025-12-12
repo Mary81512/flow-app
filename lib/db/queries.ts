@@ -20,6 +20,8 @@ function mapDbItem(row: DbItem): Item {
     customer_name: row.customerName,
     address: row.address,
     order_date: row.orderDate ?? "",
+    billing_address: row.billingAddress ?? null,
+    contact_name: row.contactName ?? null,
 
     created_at: row.createdAt,
     updated_at: row.updatedAt,

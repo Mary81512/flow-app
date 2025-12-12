@@ -20,6 +20,9 @@ export const items = sqliteTable("items", {
   // Auftragsadresse (die, wo der Monteur hinfährt)
   address: text("address").notNull(),
 
+  billingAddress: text("billing_address"), // Rechnungsadresse (optional)
+  contactName: text("contact_name"),  
+
   // optionales Feld fürs Auftragsdatum, z.B. "2025-11-25"
   // (falls du es schon in deinen Items benutzt)
   orderDate: text("order_date"),

@@ -77,6 +77,7 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
   function closeAddModal() {
     setIsAddModalOpen(false)
   }
+  
 
   // Rechnungs-Status (mit Store)
   const [invoiceState, setInvoiceState] = useState<InvoiceState>(
@@ -106,6 +107,20 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
   const isAuftrag = item.type === "auftrag"
   const typeLabel = isAuftrag ? "AUFTRAG" : "PROJEKT"
   const typeColor = isAuftrag ? "#705CD6" : "#4A7EC2"
+  const billingAddress = item.billing_address ?? ""
+  const contactName = item.contact_name ?? ""
+  const billingLine =
+  item.billing_address && item.billing_address.trim().length > 0
+    ? item.billing_address
+    : item.address
+
+  const hasContact =
+  !!item.contact_name && item.contact_name.trim().length > 0
+
+  const hasSeparateBilling =
+    billingAddress.trim().length > 0 &&
+    billingAddress.trim() !== item.address.trim()
+
 
   return (
     <main className="min-h-screen bg-[#262626] text-slate-50">
@@ -116,23 +131,48 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
         <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           {/* links: Typ + Textblock */}
           <div className="flex flex-1 gap-6">
+            {/* Typ-Tag (Quadrat) */}
             <div
-              className="flex h-28 w-28 items-center justify-center rounded-3xl text-center font-display text-lg uppercase text-slate-900"
+              className="flex h-25 w-28 items-center justify-center rounded-3xl text-center font-display text-lg uppercase text-slate-900"
               style={{ backgroundColor: typeColor }}
             >
               {typeLabel}
             </div>
 
-            <div className="flex flex-col justify-center gap-1">
+            {/* Code, Adresse, AP, Rechnungszeile */}
+            <div className="flex flex-col justify-center gap-0">
+              {/* Code ganz oben */}
               <div className="font-display text-2xl tracking-[0.12em] uppercase">
                 {item.code}
               </div>
-              <div className="text-lg">{item.customer_name}</div>
-              <div className="text-sm text-slate-200">
+
+              {/* Auftragsadresse direkt unter dem Code, etwas größer */}
+              <div className="text-base md:text-lg text-slate-200">
                 {item.address}
+              </div>
+
+              {/* Ansprechpartner / Mieter mit AP-Label */}
+              {hasContact && (
+                <div className="flex items-baseline gap-2 text-sm text-slate-200">
+                  <span className="font-semibold uppercase tracking-[0.18em] text-[0.7rem]">
+                    AP
+                  </span>
+                  <span>{item.contact_name}</span>
+                </div>
+              )}
+
+              {/* Rechnungskunde + Rechnungsadresse in einer Zeile mit Geld-Icon */}
+              <div className="mt-1 flex items-start gap-2 text-xs text-slate-300">
+                <BanknotesIcon className="mt-[2px] h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {item.customer_name}
+                  {billingLine ? `, ${billingLine}` : null}
+                </span>
               </div>
             </div>
           </div>
+
+
 
           {/* rechts: Rechnung-Toggle + Status-Ampel */}
           <div className="flex flex-col items-end gap-4 md:flex-row md:items-center">
@@ -204,7 +244,7 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
         </header>
 
         {/* CONTENT: Dateien + Logbuch */}
-        <section className="mt-8 grid gap-6 md:grid-cols-2">
+        <section className="mt-4 grid gap-6 md:grid-cols-2">
           {/* Dateien-Card */}
           <div className="rounded-[2.5rem] bg-[#3a3d43] px-8 py-6">
             <div className="mb-6 flex items-center justify-between">
@@ -322,6 +362,7 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
         onClose={closeAddModal}
         initialItemCode={item.code}
         initialContext={addContext}
+        itemId={item.id}
       />
     </main>
   )

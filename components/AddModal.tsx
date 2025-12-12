@@ -2,6 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
 export type AddContext = "file" | "log"
 export type AddKind =
@@ -18,6 +19,9 @@ type AddModalProps = {
 
   initialItemCode?: string
   initialContext?: AddContext
+
+  // 🔥 neu: für echtes Speichern von Logs
+  itemId?: string
 }
 
 export function AddModal({
@@ -25,12 +29,20 @@ export function AddModal({
   onClose,
   initialItemCode,
   initialContext = "file",
+  itemId,
 }: AddModalProps) {
+  const router = useRouter()
+
   const [activeContext, setActiveContext] = useState<AddContext>(
     initialContext
   )
   const [selectedKind, setSelectedKind] = useState<AddKind>("report")
   const [itemQuery, setItemQuery] = useState(initialItemCode ?? "")
+
+  // 🔥 neu: Log-Text + Saving-State + Fehler
+  const [logText, setLogText] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Kontext von außen übernehmen (Detail: "file" oder "log")
   useEffect(() => {
@@ -67,6 +79,76 @@ export function AddModal({
   const headerText = isFileMode
     ? "Datei hinzufügen"
     : "Logbuch-Eintrag hinzufügen"
+
+  // 🔥 Speichern-Handler
+  async function handleSave() {
+  setError(null)
+
+  // LOG-MODUS (bereits fertig)
+  if (!isFileMode) {
+    if (!itemId) {
+      setError("Kein Auftrag/Projekt ausgewählt.")
+      return
+    }
+    if (!logText.trim()) {
+      setError("Bitte einen Logbucheintrag eingeben.")
+      return
+    }
+
+    try {
+      setIsSaving(true)
+      const res = await fetch("/api/add-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, text: logText.trim() }),
+      })
+
+      if (!res.ok) throw new Error("Fehler beim Speichern.")
+
+      setLogText("")
+      onClose()
+      router.refresh()
+    } catch {
+      setError("Speichern fehlgeschlagen.")
+    } finally {
+      setIsSaving(false)
+    }
+
+    return
+  }
+
+  // 🔥 DATEI-MODUS (neu)
+  if (isFileMode) {
+    if (!itemId) {
+      setError("Kein Auftrag/Projekt ausgewählt.")
+      return
+    }
+
+    try {
+      setIsSaving(true)
+
+      const res = await fetch("/api/add-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId,
+          kind: selectedKind,
+          filename: `${itemQuery}-${selectedKind}.pdf`,
+        }),
+      })
+
+      if (!res.ok) throw new Error("Fehler beim Speichern der Datei.")
+
+      onClose()
+      router.refresh()
+    } catch (err) {
+      console.error(err)
+      setError("Datei konnte nicht gespeichert werden.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+}
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
@@ -168,13 +250,18 @@ export function AddModal({
               <label className="block">Logbucheintrag</label>
               <textarea
                 rows={4}
+                value={logText}
+                onChange={(e) => setLogText(e.target.value)}
                 className="w-full rounded-xl border border-slate-600 bg-[#1f2125] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500"
                 placeholder="z.B. 'Keller abgesaugt, Rohr gespült, Kamera-Inspektion ...'"
               />
-              <p className="text-[0.65rem] text-slate-400">
-                (Später: Zeitstempel + Quelle automatisch)
-              </p>
+              
             </div>
+          )}
+
+          {/* Fehleranzeige */}
+          {error && (
+            <p className="text-[0.7rem] text-red-400">{error}</p>
           )}
 
           {/* Footer */}
@@ -183,14 +270,17 @@ export function AddModal({
               type="button"
               onClick={onClose}
               className="text-xs uppercase tracking-[0.16em] text-slate-300"
+              disabled={isSaving}
             >
               Abbrechen
             </button>
             <button
               type="button"
-              className="rounded-full bg-slate-100 px-5 py-2 text-xs uppercase tracking-[0.16em] text-slate-900"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="rounded-full bg-slate-100 px-5 py-2 text-xs uppercase tracking-[0.16em] text-slate-900 disabled:opacity-60"
             >
-              Speichern (Mock)
+              {isSaving ? "Speichern …" : "Speichern"}
             </button>
           </div>
         </div>
@@ -198,4 +288,3 @@ export function AddModal({
     </div>
   )
 }
-

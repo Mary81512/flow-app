@@ -203,8 +203,20 @@ export default function AuftraegeClient({
                     {displayCode}
                   </div>
 
-                  {/* Kunde */}
-                  <div className="flex-1">{item.customer_name}</div>
+                  {/* Kunde + AP */}
+                  <div className="flex-1 flex flex-col justify-center leading-tight">
+                  <div className="leading-snug">
+                    {item.customer_name}
+                  </div>
+
+                  {item.contact_name && (
+                    <div className="text-[0.65rem] text-slate-100/70 leading-none">
+                      {item.contact_name}
+                    </div>
+                  )}
+                </div>
+
+
 
                   {/* Adresse (ab md) */}
                   <div className="hidden flex-[1.4] truncate md:block">
