@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { MainTopbar } from "@/components/MainTopbar"
 import { getDisplayCode } from "@/lib/codeHelpers"
+import { isItemDataComplete } from "@/lib/dataCompleteness"
 import { getItemsForOrderDate, getFilesOfItem } from "@/lib/db/queries"
 import type { Item, File, FileKind } from "@/lib/types"
 import {
@@ -34,22 +35,14 @@ function hasBaseData(item: Item): boolean {
   return hasCode && hasCustomer && hasAddress && hasDate
 }
 
-function isTodayOk(
-  item: Item,
-  hasTicket: boolean,
-  hasReport: boolean
-): boolean {
-  const baseOk = hasBaseData(item)
+function isTodayOk(item: Item, hasTicket: boolean): boolean {
+  const baseOk = isItemDataComplete(item)
   if (!baseOk) return false
 
-  if (item.type === "auftrag") {
-    // Aufträge brauchen Ticket
-    return hasTicket
-  }
-
-  // Projekte: Basisdaten reichen
+  if (item.type === "auftrag") return hasTicket
   return true
 }
+
 
 
 // -----------------------------
@@ -133,7 +126,7 @@ export default async function TodayPage() {
 
             const hasTicket = hasFileOfKind(item.id, "ticket")
             const hasReport = hasFileOfKind(item.id, "report")
-            const ok = isTodayOk(item, hasTicket, hasReport)
+            const ok = isTodayOk(item, hasTicket)
 
             const rowBg =
               item.type === "auftrag" ? "#705CD6" : "#4A7EC2"

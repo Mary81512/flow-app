@@ -143,3 +143,37 @@ export async function getProjekte(): Promise<Item[]> {
   return rows.map(mapDbItem)
 }
 
+type NewItemInput = {
+  id: string
+  type: "auftrag" | "projekt"
+  code: string
+  customer_name: string
+  contact_name?: string
+  address: string
+  order_date: string
+  created_at: string
+  updated_at: string
+  status: {
+    data_complete: boolean
+    report_generated: boolean
+    invoice_written: boolean
+  }
+}
+
+export async function createItem(input: NewItemInput) {
+  await db.insert(items).values({
+    id: input.id,
+    type: input.type,
+    code: input.code,
+    customerName: input.customer_name,
+    // falls du contactName schon in schema hast:
+    contactName: input.contact_name ?? null,
+    address: input.address,
+    orderDate: input.order_date,
+    createdAt: input.created_at,
+    updatedAt: input.updated_at,
+    statusDataComplete: input.status.data_complete,
+    statusReportGenerated: input.status.report_generated,
+    statusInvoiceWritten: input.status.invoice_written,
+  })
+}

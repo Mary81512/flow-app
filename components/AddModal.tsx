@@ -133,7 +133,7 @@ export function AddModal({
         body: JSON.stringify({
           itemId,
           kind: selectedKind,
-          filename: `${itemQuery}-${selectedKind}.pdf`,
+          filename: `${(initialItemCode ?? itemId ?? "ITEM").replaceAll(" ", "_")}-${selectedKind}.pdf`,
         }),
       })
 

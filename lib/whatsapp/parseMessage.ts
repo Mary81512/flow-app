@@ -9,6 +9,7 @@ export type ParsedWhatsApp = {
   billing_address?: string
   phone?: string
   notes?: string
+  code?: string 
 }
 
 export function parseWhatsAppMessage(text: string): ParsedWhatsApp {

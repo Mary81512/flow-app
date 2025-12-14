@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db/client"
 import { files } from "@/db/schema"
 import type { FileKind } from "@/lib/types"
+import { items } from "@/db/schema"
+import { eq } from "drizzle-orm"
+
 
 function createFileId() {
   return `F-${Date.now().toString(36)}-${Math.random()
@@ -31,6 +34,12 @@ export async function POST(req: NextRequest) {
 
     // Platzhalter-URL (später echter Upload!)
     const url = `/files/${id}-${filename ?? "file"}`
+
+    const existing = await db.select().from(items).where(eq(items.id, itemId)).limit(1)
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "Item nicht gefunden." }, { status: 404 })
+    }
+
 
     await db.insert(files).values({
       id,
