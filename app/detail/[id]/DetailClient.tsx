@@ -8,6 +8,7 @@ import { AddModal } from "@/components/AddModal"
 
 import type { Item, File, LogEntry } from "@/lib/types"
 import { hasFileOfKind } from "@/lib/fileHelpers"
+import { isBaseDataOk } from "@/lib/statusHelpers"
 
 import {
   DocumentIcon,
@@ -96,7 +97,7 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
   const { trafficLight } = getStatusWithInvoice(item, files, invoiceState)
   const statusPillStyle = getStatusPillStyle(trafficLight)
 
-  const baseOk = isBaseDataOkDetail(item, files)
+  const baseOk = isBaseDataOk(item,)
   const hasReport = hasFileOfKind(files, "report")
   const hasInvoice =
     invoiceState === "invoice" || invoiceState === "paid"

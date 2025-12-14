@@ -101,3 +101,17 @@ export function getInitialInvoiceStateForItem(item: Item): InvoiceState {
   //  - aus item.status.invoice_written einen Default ableiten
   return getInvoiceStateForItem(item)
 }
+
+
+export function isBaseDataOk(item: Item): boolean {
+  const hasCode = !!item.code?.trim()
+  const hasCustomer = !!item.customer_name?.trim()
+  const hasAddress = !!item.address?.trim()
+  const hasOrderDate = !!item.order_date?.trim()
+
+  // falls du Rechnungsadresse Pflicht machen willst:
+  const hasBilling = !!item.billing_address?.trim()
+  return hasCode && hasCustomer && hasAddress && hasOrderDate && hasBilling
+
+  return hasCode && hasCustomer && hasAddress && hasOrderDate
+}

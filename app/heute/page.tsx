@@ -5,6 +5,7 @@ import { getDisplayCode } from "@/lib/codeHelpers"
 import { isItemDataComplete } from "@/lib/dataCompleteness"
 import { getItemsForOrderDate, getFilesOfItem } from "@/lib/db/queries"
 import type { Item, File, FileKind } from "@/lib/types"
+import { isBaseDataOk } from "@/lib/statusHelpers"
 import {
   DocumentIcon,
   DocumentTextIcon,
@@ -126,7 +127,7 @@ export default async function TodayPage() {
 
             const hasTicket = hasFileOfKind(item.id, "ticket")
             const hasReport = hasFileOfKind(item.id, "report")
-            const ok = isTodayOk(item, hasTicket)
+            const ok = isBaseDataOk(item)
 
             const rowBg =
               item.type === "auftrag" ? "#705CD6" : "#4A7EC2"
