@@ -3,6 +3,13 @@ import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 import * as schema from "./schema"
 
+// Nur für lokale Entwicklung: TLS-Checks lockern,
+// weil Supabase ein selbstsigniertes Zertifikat nutzt.
+if (process.env.NODE_ENV === "development") {
+  // ⚠️ Nicht für Produktion benutzen!
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+}
+
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL ist nicht gesetzt")
 }
@@ -10,7 +17,6 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    // 🔥 Supabase-SSL: self-signed Zertifikat zulassen (nur DEV!)
     rejectUnauthorized: false,
   },
 })

@@ -36,6 +36,31 @@ import {
 // -----------------------------
 // Helper
 // -----------------------------
+function getBillingLine(item: Item): string {
+  const name = (item.customer_name ?? "").trim()
+  const rawAddress = (item.billing_address || item.address || "").trim()
+
+  // nichts da?
+  if (!name && !rawAddress) return ""
+
+  // nur Name
+  if (name && !rawAddress) return name
+
+  // nur Adresse
+  if (!name && rawAddress) return rawAddress
+
+  // beide da → prüfen, ob Adresse schon mit Name beginnt
+  const normName = name.toLowerCase()
+  const normAddr = rawAddress.toLowerCase()
+
+  if (normAddr.startsWith(normName)) {
+    // Adresse enthält den Namen schon → nur einmal anzeigen
+    return rawAddress
+  }
+
+  // sonst klassisch: Kunde, Adresse
+  return `${name}, ${rawAddress}`
+}
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso.replace("Z", ""))
@@ -110,10 +135,8 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
   const typeColor = isAuftrag ? "#705CD6" : "#4A7EC2"
   const billingAddress = item.billing_address ?? ""
   const contactName = item.contact_name ?? ""
-  const billingLine =
-  item.billing_address && item.billing_address.trim().length > 0
-    ? item.billing_address
-    : item.address
+  const billingLine = getBillingLine(item)
+
 
   const hasContact =
   !!item.contact_name && item.contact_name.trim().length > 0
@@ -121,6 +144,7 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
   const hasSeparateBilling =
     billingAddress.trim().length > 0 &&
     billingAddress.trim() !== item.address.trim()
+    
 
 
   return (
@@ -164,12 +188,11 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
 
               {/* Rechnungskunde + Rechnungsadresse in einer Zeile mit Geld-Icon */}
               <div className="mt-1 flex items-start gap-2 text-xs text-slate-300">
-                <BanknotesIcon className="mt-[2px] h-4 w-4 shrink-0" />
-                <span className="truncate">
-                  {item.customer_name}
-                  {billingLine ? `, ${billingLine}` : null}
-                </span>
-              </div>
+              <BanknotesIcon className="mt-[2px] h-4 w-4 shrink-0" />
+              <span className="truncate">
+                {billingLine}
+              </span>
+            </div>
             </div>
           </div>
 

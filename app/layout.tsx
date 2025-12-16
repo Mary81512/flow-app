@@ -1,7 +1,7 @@
 // app/layout.tsx
 import "./globals.css"
 import type { Metadata } from "next"
-import { Inter, Space_Grotesk } from "next/font/google"
+import { Inter, } from "next/font/google"
 
 // Body-Font (UI / Text)
 const inter = Inter({
@@ -9,11 +9,7 @@ const inter = Inter({
   variable: "--font-body",
 })
 
-// Headline-Font
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display",
-})
+
 
 export const metadata: Metadata = {
   title: "Flow App",
@@ -26,11 +22,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html
-      lang="de"
-      className={`${inter.variable} ${spaceGrotesk.variable}`}
-    >
-      <body className="bg-background text-white font-body">
+    <html lang="de">
+      <body className="bg-[#262626] text-slate-50 font-sans">
         {children}
       </body>
     </html>
