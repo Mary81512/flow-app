@@ -1,12 +1,13 @@
 // drizzle.config.ts
+import "dotenv/config"
 import { defineConfig } from "drizzle-kit"
 
 export default defineConfig({
-  dialect: "sqlite",
-  schema: "./db/schema.ts",   // hier wird gleich unser Schema liegen
-  out: "./drizzle",           // hier legt drizzle die Migrations ab
+  dialect: "postgresql",
+  schema: "./db/schema.ts",
+  out: "./drizzle",
   dbCredentials: {
-    // Datei-basierte SQLite-DB im Ordner "db"
-    url: "./db/sqlite.db",
+    url: process.env.DIRECT_URL!,
   },
 })
+

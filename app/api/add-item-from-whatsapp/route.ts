@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     const parsed = parseWhatsAppMessage(text)
-    const { missing } = validateParsed(parsed)
+    const { missing, validated } = validateParsed(parsed)
 
     // Minimal-Fallbacks, damit wir auch unvollständig anlegen können (WARN)
     const type = parsed.type ?? "auftrag"
@@ -56,18 +56,18 @@ export async function POST(req: Request) {
     const { createItemFromApi } = await import("@/lib/server/createItemFromApi")
 
     await createItemFromApi({
-      id,
-      type,
-      customerName,
-      address,
-      orderDate,
-      code,
-      billingAddress: parsed.billing_address ?? "",
-      contactName: parsed.contact_name ?? "",
-      missing, // speichern wir optional in Zukunft, erstmal nur fürs UI/debug
-      createdAt,
-      updatedAt: createdAt,
-    })
+    id,
+    type: validated.type,
+    customerName: validated.customer_name,
+    address: validated.address,
+    orderDate: validated.order_date,
+    code: validated.code,
+    billingAddress: validated.billing_address,
+    contactName: validated.contact_name,
+    missing,
+    createdAt,
+    updatedAt: createdAt,
+  })
 
     return NextResponse.json({ id, missing })
   } catch (e) {

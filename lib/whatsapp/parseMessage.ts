@@ -39,13 +39,48 @@ export function parseWhatsAppMessage(text: string): ParsedWhatsApp {
       if (val.toLowerCase().startsWith("p")) out.type = "projekt"
     }
 
-    if (key === "datum" || key === "order_date" || key === "auftragsdatum") {
-      // akzeptiert: 2025-12-12 oder 12.12.2025
-      const iso = val.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-      const de = val.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
-      if (iso) out.order_date = val
-      if (de) out.order_date = `${de[3]}-${de[2]}-${de[1]}`
-    }
+    
+if (key === "datum" || key === "order_date" || key === "auftragsdatum") {
+  // akzeptiert:
+  // 2025-12-12
+  // 12.12.2025
+  // 12.12.25
+  // 12/12/2025
+  // 12/12/25
+  const iso = val.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  const deLong = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
+  const deShort = val.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})$/)
+  const slashLong = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  const slashShort = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/)
+
+  if (iso) out.order_date = val
+
+  if (deLong) {
+    const dd = deLong[1].padStart(2, "0")
+    const mm = deLong[2].padStart(2, "0")
+    out.order_date = `${deLong[3]}-${mm}-${dd}`
+  }
+
+  if (deShort) {
+    const dd = deShort[1].padStart(2, "0")
+    const mm = deShort[2].padStart(2, "0")
+    const yyyy = `20${deShort[3]}`
+    out.order_date = `${yyyy}-${mm}-${dd}`
+  }
+
+  if (slashLong) {
+    const dd = slashLong[1].padStart(2, "0")
+    const mm = slashLong[2].padStart(2, "0")
+    out.order_date = `${slashLong[3]}-${mm}-${dd}`
+  }
+
+  if (slashShort) {
+    const dd = slashShort[1].padStart(2, "0")
+    const mm = slashShort[2].padStart(2, "0")
+    const yyyy = `20${slashShort[3]}`
+    out.order_date = `${yyyy}-${mm}-${dd}`
+  }
+}
 
     if (key === "kunde" || key === "rechnungskunde") out.customer_name = val
     if (key === "ap" || key === "ansprechpartner" || key === "mieter")
@@ -60,6 +95,36 @@ export function parseWhatsAppMessage(text: string): ParsedWhatsApp {
     if (key === "telefon" || key === "phone") out.phone = val
     if (key === "notiz" || key === "notes") out.notes = val
   }
+  // -----------------------------
+  // Fallbacks / Auto-Ableitungen
+  // -----------------------------
 
+  // 1) Wenn Rechnungsadresse "NAME, REST..." ist,
+  //    dann NAME als billing_name + (falls Kunde fehlt) customer_name übernehmen
+  if (out.billing_address && !out.billing_name) {
+    const parts = out.billing_address
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
+
+    if (parts.length >= 2) {
+      const first = parts[0]
+      const rest = parts.slice(1).join(", ").trim()
+
+      // Heuristik: erster Teil darf keine Ziffern enthalten (damit "Musterweg 9" nicht als Name gilt)
+      const firstLooksLikeName = first.length >= 2 && !/\d/.test(first)
+
+      if (firstLooksLikeName) {
+        out.billing_name = first
+        out.billing_address = rest
+      }
+    }
+  }
+
+  // 2) Wenn Kunde fehlt, aber billing_name existiert → Kunde daraus ableiten
+  if (!out.customer_name && out.billing_name) {
+    out.customer_name = out.billing_name
+  }
+  
   return out
 }
