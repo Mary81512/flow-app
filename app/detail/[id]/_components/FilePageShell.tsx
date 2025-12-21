@@ -34,7 +34,7 @@ export function FilePageShell({
         <MainTopbar />
 
         <section className="mt-6 flex-1">
-          <div className="relative rounded-[3rem] bg-[#2f3238] px-10 py-8 shadow-[0_12px_0_rgba(0,0,0,0.45)]">
+          <div className="relative rounded-[3rem] bg-[#2f3238] px-10 py-8 ">
             <Link
               href={`/detail/${id}`}
               className="absolute right-8 top-8 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-400/60 bg-black/20 text-slate-100 hover:bg-black/40"
@@ -51,7 +51,7 @@ export function FilePageShell({
             </div>
 
             {file ? (
-              <div className="inline-flex flex-col gap-2 rounded-3xl bg-[#d1d5db] px-6 py-5 text-slate-900 shadow-[0_10px_0_rgba(0,0,0,0.4)]">
+              <div className="inline-flex flex-col gap-2 rounded-3xl bg-[#d1d5db] px-6 py-5 text-slate-900 ">
                 <div className="flex items-center gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#9ca3af]">
                     <DocumentIcon className="h-10 w-10" />

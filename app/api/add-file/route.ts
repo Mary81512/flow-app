@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db/client"
 import { files } from "@/db/schema"
 import type { FileKind } from "@/lib/types"
-import { items } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { supabaseServerClient } from "@/lib/supabaseServer"
 
+export const runtime = "nodejs" // wichtig für Buffer / Node-APIs
 
 function createFileId() {
   return `F-${Date.now().toString(36)}-${Math.random()
@@ -15,16 +15,29 @@ function createFileId() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { itemId, kind, filename } = body as {
-      itemId?: string
-      kind?: FileKind
-      filename?: string
+    const formData = await req.formData()
+
+    const itemId = formData.get("itemId")
+    const kind = formData.get("kind")
+    const file = formData.get("file") as File | null
+
+    if (!itemId || typeof itemId !== "string") {
+      return NextResponse.json(
+        { error: "itemId ist Pflicht." },
+        { status: 400 }
+      )
     }
 
-    if (!itemId || !kind) {
+    if (!kind || typeof kind !== "string") {
       return NextResponse.json(
-        { error: "itemId und kind sind Pflicht." },
+        { error: "kind ist Pflicht." },
+        { status: 400 }
+      )
+    }
+
+    if (!file || typeof file === "string") {
+      return NextResponse.json(
+        { error: "Es wurde keine Datei mitgeschickt." },
         { status: 400 }
       )
     }
@@ -32,22 +45,45 @@ export async function POST(req: NextRequest) {
     const id = createFileId()
     const now = new Date().toISOString()
 
-    // Platzhalter-URL (später echter Upload!)
-    const url = `/files/${id}-${filename ?? "file"}`
+    const originalName = file.name || `${id}.dat`
+    const path = `${itemId}/${id}-${originalName}`
 
-    const existing = await db.select().from(items).where(eq(items.id, itemId)).limit(1)
-    if (existing.length === 0) {
-      return NextResponse.json({ error: "Item nicht gefunden." }, { status: 404 })
+    // Datei in Supabase Storage hochladen
+    const supabase = supabaseServerClient()
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const { error: uploadError } = await supabase.storage
+      .from("files") // Bucket-Name aus Schritt 1
+      .upload(path, buffer, {
+        contentType: file.type || "application/octet-stream",
+        cacheControl: "3600",
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error("❌ Upload-Fehler:", uploadError)
+      return NextResponse.json(
+        { error: "Upload nach Supabase Storage fehlgeschlagen." },
+        { status: 500 }
+      )
     }
 
+    // für PUBLIC-Bucket: direkt Public URL holen
+    const { data: publicData } = supabase.storage
+      .from("files")
+      .getPublicUrl(path)
+
+    const url = publicData.publicUrl
 
     await db.insert(files).values({
       id,
       itemId,
-      kind,
-      filename: filename ?? `${id}.dat`,
+      kind: kind as FileKind,
+      filename: originalName,
       url,
-      sizeBytes: 0,
+      sizeBytes: file.size ?? 0,
       createdAt: now,
     })
 
@@ -56,7 +92,7 @@ export async function POST(req: NextRequest) {
         id,
         itemId,
         kind,
-        filename,
+        filename: originalName,
         url,
         createdAt: now,
       },
@@ -70,3 +106,4 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+

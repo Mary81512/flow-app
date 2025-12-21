@@ -89,31 +89,41 @@ export default async function TodayPage() {
         <MainTopbar />
 
         {/* Header */}
-        <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-              Hallo Marcel!
-            </h1>
-          </div>
+       {/* Header */}
+      <header className="mt-6 flex flex-row items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+            Hallo Marcel!
+          </h1>
+        </div>
 
-          <div className="text-right text-slate-100">
-            <div className="text-4xl font-semibold leading-none md:text-5xl">
-              {timeString}
-            </div>
-            <div className="mt-2 text-lg text-slate-200">{dateString}</div>
+        <div className="text-right text-slate-100">
+          <div className="text-4xl font-semibold leading-none md:text-5xl">
+            {timeString}
           </div>
-        </header>
+          <div className="mt-2 text-lg text-slate-200">{dateString}</div>
+        </div>
+      </header>
 
         {/* Tabellen-Header */}
         <div className="mt-2 rounded-full bg-[#e5ddcf] px-8 py-4 text-[0.8rem] font-body uppercase tracking-[0.25em] text-slate-900 ">
           <div className="flex items-center justify-between gap-4">
-            <span className="hidden w-[70px] sm:block">Time</span>
-            <span className="w-[140px]">ID</span>
+            {/* Time: immer sichtbar */}
+            <span className="w-[70px]">Time</span>
+
+            {/* ID: nur auf großen Screens */}
+            <span className="hidden w-[180px] lg:block">ID</span>
+
             <span className="flex-1">Kunde</span>
+
+            {/* Adresse: ab md */}
             <span className="hidden flex-[1.2] md:block">Adresse</span>
+
+            {/* Dateien: ab lg */}
             <span className="hidden w-[100px] text-center lg:block">
               Dateien
             </span>
+
             <span className="w-[80px] text-center">Daten</span>
             <span className="w-[48px]" />
           </div>
@@ -138,28 +148,27 @@ export default async function TodayPage() {
                 className="rounded-full px-8 py-4 text-base text-slate-900 "
                 style={{ backgroundColor: rowBg }}
               >
-                <div className="flex items- justify-between gap-4">
-                  {/* Time */}
-                  <div className="hidden w-[70px] font-mono text-xs sm:flex items-center">
+                {/* kleine Korrektur: items-center statt items- */}
+                <div className="flex items-center justify-between gap-4">
+                  {/* Time – immer sichtbar */}
+                  <div className="flex w-[70px] items-center font-mono text-xs">
                     {time}
                   </div>
 
-                  {/* ID / Code */}
-                  <div className="w-[140px] font-semibold flex items-center">
+                  {/* ID / Code – nur auf großen Screens */}
+                  <div className="hidden w-[180px] text-[0.7rem] items-center font-semibold lg:flex">
                     {displayCode}
                   </div>
 
                   {/* Kunde + AP (falls vorhanden) */}
                   <div className="flex-1 flex flex-col justify-center self-stretch">
-                  <div className="leading-none">{item.customer_name}</div>
-                  {item.contact_name && (
-                    <div className="mt-1 text-[0.65rem] leading-none text-slate-100/70">
-                      {item.contact_name}
-                    </div>
-                  )}
-                </div>
-
-
+                    <div className="leading-none">{item.customer_name}</div>
+                    {item.contact_name && (
+                      <div className="mt-1 text-[0.65rem] leading-none text-slate-100/70">
+                        {item.contact_name}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Adresse */}
                   <div className="hidden flex-[1.2] truncate md:block">
@@ -215,6 +224,7 @@ export default async function TodayPage() {
             </div>
           )}
         </div>
+
       </div>
     </main>
   )

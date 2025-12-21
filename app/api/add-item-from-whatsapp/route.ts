@@ -1,77 +1,43 @@
+// app/api/add-item-from-whatsapp/route.ts
 import { NextResponse } from "next/server"
 import { parseWhatsAppMessage } from "@/lib/whatsapp/parseMessage"
 import { validateParsed } from "@/lib/whatsapp/validateParsed"
-
-function nowIso() {
-  return new Date().toISOString()
-}
-
-// super simple id generator (ok für jetzt)
-function makeId(type: "auftrag" | "projekt") {
-  return `${type === "auftrag" ? "A" : "P"}-${crypto.randomUUID().slice(0, 8)}`
-}
-
-function makeCode(type: "auftrag" | "projekt", customerName: string, orderDate: string) {
-  // A-MEIER-230125
-  const d = new Date(orderDate)
-  const dd = String(d.getDate()).padStart(2, "0")
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const yy = String(d.getFullYear()).slice(-2)
-
-  const clean = customerName
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 12)
-
-  return `${type === "auftrag" ? "A" : "P"}-${clean}-${dd}${mm}${yy}`
-}
+import { createItemFromApi } from "@/lib/server/createItemFromApi"
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { text?: string }
     const text = body.text?.trim()
+
     if (!text) {
-      return NextResponse.json({ error: "Kein WhatsApp-Text übergeben." }, { status: 400 })
+      return NextResponse.json(
+        { error: "Kein WhatsApp-Text übergeben." },
+        { status: 400 }
+      )
     }
 
     const parsed = parseWhatsAppMessage(text)
-    const { missing, validated } = validateParsed(parsed)
+    const { missing } = validateParsed(parsed)
 
-    // Minimal-Fallbacks, damit wir auch unvollständig anlegen können (WARN)
-    const type = parsed.type ?? "auftrag"
-    const customerName = parsed.customer_name ?? "Unbekannt"
-    const orderDate = parsed.order_date ?? new Date().toISOString().slice(0, 10)
-    const address = parsed.address ?? "—"
-
-    const id = makeId(type)
-    const code = (parsed.code?.trim() && parsed.code) || makeCode(type, customerName, orderDate)
-
-    // reuse: gleiche Felder wie dein /api/add-item
-    const createdAt = nowIso()
-
-    // TODO: hier rufst du deine bestehende DB-insert Logik auf
-    // Wenn du schon /api/add-item hast, kannst du auch dessen Insert-Funktion extrahieren.
-    const { createItemFromApi } = await import("@/lib/server/createItemFromApi")
-
-    await createItemFromApi({
-    id,
-    type: validated.type,
-    customerName: validated.customer_name,
-    address: validated.address,
-    orderDate: validated.order_date,
-    code: validated.code,
-    billingAddress: validated.billing_address,
-    contactName: validated.contact_name,
-    missing,
-    createdAt,
-    updatedAt: createdAt,
-  })
+    // Wir reichen nur die Rohdaten weiter – alle Fallbacks / Code-Generierung
+    // passieren in createItemFromApi
+    const { id } = await createItemFromApi({
+      type: parsed.type,
+      customerName: parsed.customer_name,
+      address: parsed.address,
+      orderDate: parsed.order_date,
+      billingAddress: parsed.billing_address,
+      contactName: parsed.contact_name,
+      code: parsed.code,
+    })
 
     return NextResponse.json({ id, missing })
   } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: "Fehler beim WhatsApp-Import." }, { status: 500 })
+    console.error("❌ Fehler beim WhatsApp-Import:", e)
+    return NextResponse.json(
+      { error: "Fehler beim WhatsApp-Import." },
+      { status: 500 }
+    )
   }
 }
+

@@ -155,14 +155,15 @@ export default function DetailClient({ item, files, logs }: DetailClientProps) {
         {/* HEADER */}
         <header className="mt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           {/* links: Typ + Textblock */}
-          <div className="flex flex-1 gap-6">
+          <div className="flex flex-1 gap-6 items-start">
             {/* Typ-Tag (Quadrat) */}
             <div
-              className="flex h-25 w-28 items-center justify-center rounded-3xl text-center font-display text-lg uppercase text-slate-900"
-              style={{ backgroundColor: typeColor }}
-            >
-              {typeLabel}
-            </div>
+            className="flex h-24 w-28 flex-shrink-0 items-center justify-center rounded-3xl text-center font-display text-lg uppercase text-slate-900"
+            style={{ backgroundColor: typeColor }}
+          >
+            {typeLabel}
+          </div>
+
 
             {/* Code, Adresse, AP, Rechnungszeile */}
             <div className="flex flex-col justify-center gap-0">

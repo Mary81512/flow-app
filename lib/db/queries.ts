@@ -151,6 +151,7 @@ type NewItemInput = {
   contact_name?: string
   address: string
   order_date: string
+  billing_address?: string | null
   created_at: string
   updated_at: string
   status: {
@@ -170,6 +171,7 @@ export async function createItem(input: NewItemInput) {
     contactName: input.contact_name ?? null,
     address: input.address,
     orderDate: input.order_date,
+    billingAddress: input.billing_address ?? null, 
     createdAt: input.created_at,
     updatedAt: input.updated_at,
     statusDataComplete: input.status.data_complete,

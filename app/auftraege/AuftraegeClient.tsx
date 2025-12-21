@@ -1,7 +1,7 @@
 // app/auftraege/AuftraegeClient.tsx
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, useMemo, useState } from "react"
 import Link from "next/link"
 import { getDisplayCode } from "@/lib/codeHelpers"
 import type { Item, File } from "@/lib/types"
@@ -53,6 +53,8 @@ export default function AuftraegeClient({
   jobs,
   filesByItem,
 }: AuftraegeClientProps) {
+  const [query, setQuery] = useState("")
+
   // Dateien-Helper, jetzt aus filesByItem statt mockApi
   function getFilesForItem(itemId: string): File[] {
     return filesByItem[itemId] ?? []
@@ -97,6 +99,27 @@ export default function AuftraegeClient({
     }
   }
 
+  // 🔍 Filter-Logik für Suche
+  function matchesQuery(item: Item, q: string) {
+    if (!q) return true
+    const needle = q.toLowerCase()
+
+    const haystacks = [
+      item.code ?? "",
+      item.customer_name ?? "",
+      item.address ?? "",
+      item.contact_name ?? "",
+      item.order_date ?? "",
+    ]
+
+    return haystacks.some((h) => h.toLowerCase().includes(needle))
+  }
+
+  const filteredJobs = useMemo(
+    () => jobs.filter((job) => matchesQuery(job, query)),
+    [jobs, query]
+  )
+
   const now = new Date()
   const timeString = now.toLocaleTimeString("de-DE", {
     hour: "2-digit",
@@ -139,8 +162,15 @@ export default function AuftraegeClient({
             </div>
           </div>
 
+          {/* 🔍 Suche aktiv */}
           <div className="mt-2 flex w-full items-center gap-2 rounded-full bg-[#e5ddcf] px-4 py-2 text-xs font-body uppercase tracking-[0.2em] text-slate-900 md:max-w-xs md:self-end">
-            <span className="flex-1 opacity-60">Suche (später)</span>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Suche nach ID, Kunde, Adresse…"
+              className="flex-1 bg-transparent text-[0.7rem] uppercase tracking-[0.18em] text-slate-900 placeholder:opacity-60 focus:outline-none"
+            />
             <span className="text-lg">🔍</span>
           </div>
         </div>
@@ -149,7 +179,7 @@ export default function AuftraegeClient({
       {/* Tabellen-Header */}
       <div className="mt-4 rounded-full bg-[#e5ddcf] px-8 py-4 text-[0.8rem] font-body uppercase tracking-[0.25em] text-slate-900">
         <div className="flex items-center justify-between gap-4">
-          <span className="w-[160px]">ID</span>
+          <span className="w-[180px]">ID</span>
           <span className="flex-1">Kunde</span>
           <span className="hidden flex-[1.4] md:block">Adresse</span>
           <span className="hidden w-[120px] text-center lg:block">
@@ -164,8 +194,14 @@ export default function AuftraegeClient({
 
       {/* Rows + Heute-Trenner */}
       <div className="mt-2 flex flex-col gap-2">
-        {jobs.map((item, index) => {
-          const displayCode = getDisplayCode(item, jobs)
+        {filteredJobs.length === 0 && (
+          <div className="mt-4 rounded-2xl bg-black/20 px-4 py-3 text-sm text-slate-300">
+            Keine Aufträge gefunden.
+          </div>
+        )}
+
+        {filteredJobs.map((item, index) => {
+          const displayCode = getDisplayCode(item, filteredJobs)
           const hasTicket = hasTicketFile(item)
           const hasReport = hasReportFile(item)
 
@@ -173,9 +209,10 @@ export default function AuftraegeClient({
 
           const rowBg = "#705CD6"
 
-          // --- Timeline-Logik ---
+          // --- Timeline-Logik (jetzt basierend auf gefilterter Liste) ---
           const isBeforeToday = item.order_date < todayIso
-          const prevOrderDate = index > 0 ? jobs[index - 1].order_date : null
+          const prevOrderDate =
+            index > 0 ? filteredJobs[index - 1].order_date : null
           const prevIsBeforeToday =
             prevOrderDate !== null ? prevOrderDate < todayIso : false
 
@@ -199,24 +236,22 @@ export default function AuftraegeClient({
               >
                 <div className="flex items-center justify-between gap-4">
                   {/* ID / Code */}
-                  <div className="w-[160px] font-semibold">
+                  <div className="w-[180px] text-[0.7rem] font-semibold leading-tight">
                     {displayCode}
                   </div>
 
                   {/* Kunde + AP */}
                   <div className="flex-1 flex flex-col justify-center leading-tight">
-                  <div className="leading-snug">
-                    {item.customer_name}
-                  </div>
-
-                  {item.contact_name && (
-                    <div className="text-[0.65rem] text-slate-100/70 leading-none">
-                      {item.contact_name}
+                    <div className="leading-snug">
+                      {item.customer_name}
                     </div>
-                  )}
-                </div>
 
-
+                    {item.contact_name && (
+                      <div className="text-[0.65rem] text-slate-100/70 leading-none">
+                        {item.contact_name}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Adresse (ab md) */}
                   <div className="hidden flex-[1.4] truncate md:block">
